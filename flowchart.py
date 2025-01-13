@@ -111,15 +111,32 @@ def get_config():
     )
     return config
 
-# 상호작용 가능한 그래프 표시
-nodes = get_nodes(st.session_state.selected_process)
-edges = get_edges()
-config = get_config()
+# 함수: 랜덤 시계열 데이터 생성 및 세션 상태에 저장
+def get_timeseries_data(process_name, points=50):
+    if 'timeseries_data' not in st.session_state:
+        st.session_state.timeseries_data = {}
+    
+    if process_name not in st.session_state.timeseries_data:
+        np.random.seed()  # 랜덤 시드 설정 (필요 시 고정 가능)
+        dates = pd.date_range(start='2023-01-01', periods=points)
+        values = np.random.randn(points).cumsum()  # 랜덤 누적 합
 
-# Streamlit Columns: 메인 플로우 차트와 원의 집합을 나란히 배치
+        df = pd.DataFrame({
+            'Date': dates,
+            'Value': values
+        })
+        st.session_state.timeseries_data[process_name] = df
+    
+    return st.session_state.timeseries_data[process_name]
+
+# 상호작용 가능한 그래프 및 원의 집합을 나란히 배치
 col1, col2 = st.columns([3, 1])  # 비율을 조정하여 공간 배분
 
 with col1:
+    nodes = get_nodes(st.session_state.selected_process)
+    edges = get_edges()
+    config = get_config()
+    
     response = agraph(nodes=nodes, edges=edges, config=config)
 
     # 선택된 노드 처리
@@ -130,6 +147,10 @@ with col1:
         # 프로세스 이름 가져오기
         process_name = process_labels[clicked_node_id]
         st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
+        # 선택 변경 시 기존 시계열 데이터 초기화 (필요 시)
+        # Optional: Uncomment the following line if you want to reset the data when process changes
+        # if process_name in st.session_state.timeseries_data:
+        #     del st.session_state.timeseries_data[process_name]
 
 with col2:
     st.markdown("### 🔵🟢🔴 프로세스 상태")
@@ -212,18 +233,14 @@ with st.sidebar:
 # 메인 타이틀
 st.title("📊 Connected Process Flow Chart & Simulator")
 
-# 함수: 랜덤 시계열 데이터 생성
-def generate_random_timeseries(process_name, points=50):
-    np.random.seed()
-    dates = pd.date_range(start='2023-01-01', periods=points)
-    values = np.random.randn(points).cumsum()  # 랜덤 누적 합
+# 선택된 프로세스 이름 추출
+selected_process_name = st.session_state.selected_process.split(" ", 1)[1]
 
-    df = pd.DataFrame({
-        'Date': dates,
-        'Value': values
-    })
+# 시계열 데이터 가져오기
+timeseries_df = get_timeseries_data(selected_process_name)
 
-    # Plotly 차트
+# Plotly 차트 생성
+def create_timeseries_chart(df, process_name):
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df['Date'],
@@ -251,8 +268,8 @@ st.subheader(f"📌 {st.session_state.selected_process} Details and Data")
 
 # 상세 설명 및 시계열 데이터 표시
 st.markdown(process_descriptions.get(st.session_state.selected_process, "Select a process from the sidebar."))
-st.plotly_chart(generate_random_timeseries(st.session_state.selected_process.split(" ", 1)[1]), use_container_width=True)
+st.plotly_chart(create_timeseries_chart(timeseries_df, selected_process_name), use_container_width=True)
 
 # 푸터
 st.markdown("---")
-st.markdown("ⓒ 2025 K-water AI Lab | Contact: sunghoonkim@kwater.or.kr")
+st.markdown("ⓒ 2025 K-water AI Lab | Contact: sunghoonkim@kwater.or.kr
