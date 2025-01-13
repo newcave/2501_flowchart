@@ -76,20 +76,20 @@ def get_nodes(selected):
             # 선택된 노드: 배경색 주황색 및 테두리 색상 진하게 변경
             node_color = {
                 "background": "#FFA500",  # 주황색
-                "border": "#FF8C00",      # 어두운 주황색 (테두리 색상)
+                "border": "#FF8C00",
                 "highlight": {
-                    "background": "#FFB347",  # 밝은 주황색 (마우스 오버 시)
-                    "border": "#FF8C00"       # 어두운 주황색
+                    "background": "#FFB347",
+                    "border": "#FF8C00"
                 }
             }
         else:
             # 기본 노드 색상
             node_color = {
                 "background": "#ADD8E6",  # 연한 파랑
-                "border": "#000000",      # 검정 테두리
+                "border": "#000000",
                 "highlight": {
-                    "background": "#87CEFA",  # 밝은 파랑 (마우스 오버 시)
-                    "border": "#000000"       # 검정 테두리
+                    "background": "#87CEFA",
+                    "border": "#000000"
                 }
             }
         
@@ -97,7 +97,7 @@ def get_nodes(selected):
             Node(
                 id=node_id,
                 label=f"Process {node_id}\n({process_labels[node_id]})",
-                size=30,
+                size=50,
                 color=node_color
             )
         )
@@ -119,7 +119,7 @@ def get_edges():
 def get_config():
     config = Config(
         height=600,
-        width=800,
+        width=1200,
         directed=True,
         physics=True,
         hierarchical=False,
@@ -136,7 +136,7 @@ def get_timeseries_data(process_name, points=50):
     
     if process_name not in st.session_state.timeseries_data:
         # 랜덤 시드 고정 (일관된 데이터 생성)
-        seed = hash(process_name) % (2**32)  # 프로세스 이름을 기반으로 시드 설정
+        seed = hash(process_name) % (2**32)
         np.random.seed(seed)
         dates = pd.date_range(start='2023-01-01', periods=points)
         values = np.random.randn(points).cumsum()  # 랜덤 누적 합
@@ -201,7 +201,7 @@ with st.sidebar:
     if selected_process_sidebar != st.session_state.selected_process:
         st.session_state.selected_process = selected_process_sidebar
     
-    # Disinfection 선택 시 추가 입력 슬라이더 표시
+    # Disinfection 선택 시 추가 입력 슬라이더
     if st.session_state.selected_process.startswith("4️⃣"):
         st.write("---")
         st.header("모델 인풋 설정")
@@ -209,25 +209,25 @@ with st.sidebar:
         # 이미지 불러오기
         try:
             im = Image.open("AI_Lab_logo.jpg")
-            st.image(im, caption=" ", use_column_width=True)  # 사이드바에 이미지 표시
+            st.image(im, caption=" ", use_column_width=True)
         except FileNotFoundError:
-            st.write("Logo image not found.")  # 이미지가 없을 때의 처리
+            st.write("Logo image not found.")
         
-        # 사용자 입력 받기
+        # 사용자 입력
         DOC = st.slider("DOC (mg/L)", 0.0, 10.0, 5.0)
         NH3 = st.slider("Surrogate Variable (mg/L)", 0.0, 5.0, 0.5)
         Cl0 = st.slider("현재농도 Cl0 (mg/L)", 0.0, 5.0, 1.5)
         Temp = st.slider("Temperature (°C)", 0.0, 35.0, 20.0)
         max_time = st.slider("최대예측시간 (hrs)", 1, 24, 5)
         
-        # 추가적인 사이드바 입력 (k1, k2 범위)
+        # 추가적인 범위
         st.header("EPA 모델 k1, k2 범위 설정")
         k1_low = st.slider("AI High1 (k1 최대 적정범위)", 0.01, 5.0, 3.5)
         k1_high = st.slider("AI Low1 (k1 최소 적정범위)", 0.01, 5.0, 2.0)
         k2_low = st.slider("AI High2 (k2 최대 적정범위)", 0.01, 5.0, 0.1)
         k2_high = st.slider("AI Low2 (k2 최소 적정범위)", 0.01, 5.0, 0.5)
         
-        # Assign to session state
+        # 세션에 저장
         if 'disinfection_inputs' not in st.session_state:
             st.session_state.disinfection_inputs = {}
         
@@ -244,95 +244,76 @@ with st.sidebar:
     st.write("---")
     st.info(f"🔍 **Selected Process:** {st.session_state.selected_process}")
 
-# 메인 레이아웃 구성
-col1, col2 = st.columns([3, 1])  # 비율을 조정하여 공간 배분
+# 메인 레이아웃
+col1, col2 = st.columns([3, 1])
 
 with col1:
-    # Flow-Chart 표시
+    # Flow-Chart (Agraph)
     nodes = get_nodes(st.session_state.selected_process)
     edges = get_edges()
     config = get_config()
     
     response = agraph(nodes=nodes, edges=edges, config=config)
 
-    # 노드 클릭 시, 세션 상태 업데이트
     if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
         clicked_node_id = response['clickedNodes'][0]['id']
-        # 프로세스 번호 매핑 (A-F -> 1-6)
-        process_number = ord(clicked_node_id) - 64  # 'A'->1, 'B'->2, ...
-        # 프로세스 이름 가져오기
+        process_number = ord(clicked_node_id) - 64  # 'A' -> 1
         process_name = process_labels.get(clicked_node_id, "Unknown Process")
         st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
 
-# -------------------------------------------------------------
-# 에러 방지를 위해 process_name을 미리 정의(노드 미클릭 시에도 사용)
-# -------------------------------------------------------------
-try:
-    # '1️⃣' 같은 이모지+숫자 형식에서 숫자만 추출 (예: '1')
-    number_str = st.session_state.selected_process.split()[0][0]
-    number = int(number_str)  # 1
-    fallback_node_id = chr(64 + number)  # 1 -> 'A'
-    process_name = process_labels.get(fallback_node_id, "Unknown Process")
-except (IndexError, ValueError):
-    process_name = "Unknown Process"
-
+# --------------------------------------------------------------------
+# col2 영역에서 'Plotly Circle Chart' 대신 'Agraph'를 사용해 4개 노드 표시
+# --------------------------------------------------------------------
 with col2:
-    # 프로세스 A 선택 시 리디렉션 안내
+    # 노드 클릭 여부와 상관없이 process_name을 세션값 기준으로 안전하게 추출
+    try:
+        num_str = st.session_state.selected_process.split()[0][0]  # 예: "1️⃣" -> '1'
+        num = int(num_str)
+        fallback_node_id = chr(64 + num)  # 1 -> 'A'
+        process_name = process_labels.get(fallback_node_id, "Unknown Process")
+    except (IndexError, ValueError):
+        process_name = "Unknown Process"
+
+    # 프로세스 A 선택 시 안내
     if st.session_state.selected_process.startswith("1️⃣"):
         st.info("🔄 Manganese Prediction in reservoirs")
         st.markdown("[👉 Click](https://mn-prediction-kwaterailab.streamlit.app/)")
     else:
-        st.subheader(f"🔵 {process_name} - Water Quality Parameters")
+        st.subheader(f"🔵 {process_name} - Key Parameters")
 
-        fig_circles = go.Figure()
-        parameters = [
-            {"x_center": 0.5, "y_center": 0.8, "radius": 0.1, "color": "steelblue",  "label": "Manganese"},
-            {"x_center": 0.2, "y_center": 0.4, "radius": 0.1, "color": "forestgreen","label": "Algae"},
-            {"x_center": 0.8, "y_center": 0.4, "radius": 0.1, "color": "goldenrod",  "label": "Synedra"},
-            {"x_center": 0.5, "y_center": 0.2, "radius": 0.1, "color": "firebrick",  "label": "2-MIB"}
+        # 4개 노드만 있는 Agraph 구성
+        # (1) Manganese, (2) Algae, (3) Synedra, (4) 2-MIB
+        node_list = [
+            Node(id="Manganese", label="Manganese", size=30, color="#4F81BD"),  # 파랑
+            Node(id="Algae",     label="Algae",     size=30, color="#9BBB59"),  # 연두
+            Node(id="Synedra",   label="Synedra",   size=30, color="#F79646"),  # 주황
+            Node(id="2-MIB",     label="2-MIB",     size=30, color="#C0504D")   # 붉은색
         ]
+        # 이번에는 간단히 노드 간 연결(엣지) 없이 4개의 노드만 표시
+        edge_list = []
 
-        for param in parameters:
-            fig_circles.add_shape(
-                type="circle",
-                xref="paper", yref="paper",
-                x0=param["x_center"] - param["radius"],
-                y0=param["y_center"] - param["radius"],
-                x1=param["x_center"] + param["radius"],
-                y1=param["y_center"] + param["radius"],
-                fillcolor=param["color"],
-                line=dict(color=param["color"]),
-            )
-            fig_circles.add_annotation(
-                x=param["x_center"],
-                y=param["y_center"],
-                text=param["label"],
-                showarrow=False,
-                font=dict(color="white", size=14, family="Arial"),
-                xanchor="center",
-                yanchor="middle"
-            )
-
-        fig_circles.update_layout(
-            title="🔵 Key Parameters of Water Quality",
-            showlegend=False,
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            width=600,
+        # 두 번째 Agraph 설정
+        config2 = Config(
             height=600,
-            plot_bgcolor='white'
+            width=600,
+            directed=False,
+            physics=True,
+            nodeHighlightBehavior=True,
+            node={'color': '#ADD8E6'},
+            link={'color': '#808080', 'labelHighlightBold': True}
         )
-        st.plotly_chart(fig_circles, use_container_width=True)
+
+        # Agraph 출력
+        agraph(nodes=node_list, edges=edge_list, config=config2)
 
 # 메인 타이틀
 st.title("📊 Connected Process Flow Chart & Simulator")
 
-# Disinfection 프로세스일 경우 전용 그래프 표시
+# Disinfection 프로세스 로직
 if st.session_state.selected_process.startswith("4️⃣"):
     if 'disinfection_inputs' not in st.session_state:
         st.warning("사이드바에서 Disinfection 프로세스의 입력을 설정해 주세요.")
     else:
-        # 사용자 입력 값 가져오기
         inputs = st.session_state.disinfection_inputs
         DOC = inputs['DOC']
         NH3 = inputs['NH3']
@@ -344,7 +325,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
         k2_low = inputs['k2_low']
         k2_high = inputs['k2_high']
         
-        # EPA 모델에서 k1, k2 계산
+        # EPA 모델
         try:
             k1_EPA = np.exp(-0.442 + 0.889 * np.log(DOC) + 0.345 * np.log(7.6 * NH3) 
                             - 1.082 * np.log(Cl0) + 0.192 * np.log(Cl0 / DOC))
@@ -354,7 +335,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
             st.error("EPA 모델 계산을 위한 입력값이 유효하지 않습니다.")
             st.stop()
         
-        # Two-phase 모델에서 A, k1, k2 계산
+        # Two-phase 모델
         try:
             A_Two_phase = np.exp(
                 0.168 - 0.148 * np.log(Cl0 / DOC) + 0.29 * np.log(1) - 0.41 * np.log(Cl0)
@@ -373,30 +354,30 @@ if st.session_state.selected_process.startswith("4️⃣"):
             st.error("Two-phase 모델 계산을 위한 입력값이 유효하지 않습니다.")
             st.stop()
         
-        # 시간 범위
+        # 시간
         time_range = np.linspace(0, max_time, 100)
         
-        # EPA 모델 (원래 입력값으로 계산)
+        # EPA 모델 (기본)
         C_EPA = np.where(
             time_range <= 5,
             Cl0 * np.exp(-k1_EPA * time_range),
             Cl0 * np.exp(5 * (k2_EPA - k1_EPA)) * np.exp(-k2_EPA * time_range)
         )
         
-        # 시간에 비례한 랜덤 변동 추가 (최대 20%)
+        # 시간 변동(랜덤)
         def apply_time_based_variation(array, max_time):
             variation_factors = 1 + (time_range / max_time * 2) * np.random.uniform(-0.2, 0.4, size=array.shape)
             return array * variation_factors
         
         C_EPA_varied = apply_time_based_variation(C_EPA, max_time)
         
-        # Two-phase 모델 (원래 입력값으로 계산)
+        # Two-phase 모델 (기본)
         C_Two_phase = Cl0 * (
             A_Two_phase * np.exp(-k1_Two_phase * time_range) 
             + (1 - A_Two_phase) * np.exp(-k2_Two_phase * time_range)
         )
         
-        # EPA 모델 (사용자가 설정한 k1, k2 범위로 High, Low 계산)
+        # EPA 모델 (사용자 지정 범위)
         C_EPA_low = np.where(
             time_range <= 5,
             Cl0 * np.exp(-k1_low * time_range),
@@ -409,7 +390,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
             Cl0 * np.exp(5 * (k2_high - k1_high)) * np.exp(-k2_high * time_range)
         )
         
-        # 그래프 그리기 (Matplotlib)
+        # 그래프 그리기
         plt.figure(figsize=(10, 6))
         plt.plot(time_range, C_EPA_varied, label='실측데이터 (Virtually Generated)', color='blue', linewidth=3.5)
         # plt.plot(time_range, C_Two_phase, label='Two-phase Model (Original Input)', color='green', linewidth=2.5)
@@ -422,7 +403,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
         plt.grid(True)
         st.pyplot(plt)
         
-        # 결과가 범위 내에 있는지 여부 체크 (0.5시간 이후부터)
+        # 결과 체크
         is_normal = np.all((C_EPA_varied >= C_EPA_low) & (C_EPA_varied <= C_EPA_high))
         is_initial_phase = time_range <= 0.5
         if is_normal or np.all(is_initial_phase):
@@ -433,7 +414,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
             st.markdown("<h1 style='text-align: center; color: red;'>비정상</h1>", unsafe_allow_html=True)
 
 else:
-    # Disinfection 외의 프로세스가 선택된 경우
+    # Disinfection 외의 프로세스
     selected_process_name = st.session_state.selected_process.split(" ", 1)[1]
     timeseries_df = get_timeseries_data(selected_process_name)
     
