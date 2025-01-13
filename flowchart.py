@@ -108,16 +108,67 @@ nodes = get_nodes(st.session_state.selected_process)
 edges = get_edges()
 config = get_config()
 
-response = agraph(nodes=nodes, edges=edges, config=config)
+# Streamlit Columns: 메인 플로우 차트와 원의 집합을 나란히 배치
+col1, col2 = st.columns([3, 1])  # 비율을 조정하여 공간 배분
 
-# 선택된 노드 처리
-if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
-    clicked_node_id = response['clickedNodes'][0]['id']
-    # 프로세스 번호 매핑 (A-F -> 1-6)
-    process_number = ord(clicked_node_id) - 64  # 'A'->1, 'B'->2, ...
-    # 프로세스 이름 가져오기
-    process_name = process_labels[clicked_node_id]
-    st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
+with col1:
+    response = agraph(nodes=nodes, edges=edges, config=config)
+
+    # 선택된 노드 처리
+    if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
+        clicked_node_id = response['clickedNodes'][0]['id']
+        # 프로세스 번호 매핑 (A-F -> 1-6)
+        process_number = ord(clicked_node_id) - 64  # 'A'->1, 'B'->2, ...
+        # 프로세스 이름 가져오기
+        process_name = process_labels[clicked_node_id]
+        st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
+
+with col2:
+    st.markdown("### 🔵🟢🔴 프로세스 상태")
+    
+    # Plotly를 사용하여 세 개의 색깔 다른 원 그리기
+    fig_circles = go.Figure()
+
+    # 각 원의 위치와 색상 정의
+    circles = [
+        {"x_center": 0.5, "y_center": 0.7, "radius": 0.1, "color": "blue", "label": "프로세스 1"},
+        {"x_center": 0.3, "y_center": 0.3, "radius": 0.1, "color": "green", "label": "프로세스 2"},
+        {"x_center": 0.7, "y_center": 0.3, "radius": 0.1, "color": "red", "label": "프로세스 3"},
+    ]
+
+    for circle in circles:
+        fig_circles.add_shape(
+            type="circle",
+            xref="paper", yref="paper",
+            x0=circle["x_center"] - circle["radius"],
+            y0=circle["y_center"] - circle["radius"],
+            x1=circle["x_center"] + circle["radius"],
+            y1=circle["y_center"] + circle["radius"],
+            fillcolor=circle["color"],
+            line=dict(color=circle["color"]),
+        )
+        # 라벨 추가
+        fig_circles.add_annotation(
+            x=circle["x_center"],
+            y=circle["y_center"],
+            text=circle["label"],
+            showarrow=False,
+            font=dict(color="white", size=12),
+            xanchor="center",
+            yanchor="middle"
+        )
+
+    # 레이아웃 설정
+    fig_circles.update_layout(
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        width=300,
+        height=300,
+        margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor="white",
+    )
+
+    st.plotly_chart(fig_circles, use_container_width=True)
 
 # 사이드바 설정
 with st.sidebar:
