@@ -62,7 +62,6 @@ if st.session_state.selected_process.startswith("1️⃣") and not st.session_st
 
 # 함수: 노드 색상 및 테두리 업데이트
 def get_nodes(selected):
-    # selected = "1️⃣ Raw Water Quality Prediction"
     try:
         # 첫 번째 단어에서 숫자 추출 (예: "1️⃣"에서 "1" 추출)
         number_str = selected.split()[0][0]
@@ -98,7 +97,7 @@ def get_nodes(selected):
             Node(
                 id=node_id,
                 label=f"Process {node_id}\n({process_labels[node_id]})",
-                size=30,
+                size=50,
                 color=node_color
             )
         )
@@ -120,7 +119,7 @@ def get_edges():
 def get_config():
     config = Config(
         height=600,
-        width=800,
+        width=1200,
         directed=True,
         physics=True,
         hierarchical=False,
@@ -268,34 +267,23 @@ with col1:
 with col2:
     # **프로세스 A 선택 시 리디렉션**
     if st.session_state.selected_process.startswith("1️⃣"):
-        st.info("🔄 자동으로 연결되지 않는 경우, 아래 링크를 클릭하세요.")
-        st.markdown("[👉 여기를 클릭하여 이동](https://mn-prediction-kwaterailab.streamlit.app/)")
-#         if not st.session_state.redirected:
-#            components.html(
-#                """
-#                <script>
-#                    window.location.href = "https://mn-prediction-kwaterailab.streamlit.app/";
-#                </script>
-#                """,
-#                height=0,
-#                width=0
-#            )
-#            st.session_state.redirected = True
+        st.info("🔄 Manganese Prediction in reservoirs")
+        st.markdown("[👉 Click](https://mn-prediction-kwaterailab.streamlit.app/)")
     else:
-        st.subheader(f"🔵 {process_name} - Raw Water Quality Flow Chart")
+        # -----------------------------------------
+        # 수정된 부분 (수정 예시 1) 시작
+        # -----------------------------------------
+        st.subheader(f"🔵 {process_name} - Water Quality Parameters")  # 서브헤더 문구 변경
 
-        # Plotly를 사용한 Circle Flow Chart 생성
         fig_circles = go.Figure()
-
-        # 각 원의 위치와 색상, 라벨 정의
+        # Circle에 표시될 파라미터 (원본 유지, 필요 시 변경 가능)
         parameters = [
-            {"x_center": 0.5, "y_center": 0.8, "radius": 0.1, "color": "steelblue", "label": "Manganese"},
-            {"x_center": 0.2, "y_center": 0.4, "radius": 0.1, "color": "forestgreen", "label": "Algae"},
-            {"x_center": 0.8, "y_center": 0.4, "radius": 0.1, "color": "goldenrod", "label": "Synedra"},
-            {"x_center": 0.5, "y_center": 0.2, "radius": 0.1, "color": "firebrick", "label": "2-MIB"}
+            {"x_center": 0.5, "y_center": 0.8, "radius": 0.1, "color": "steelblue",  "label": "Manganese"},
+            {"x_center": 0.2, "y_center": 0.4, "radius": 0.1, "color": "forestgreen","label": "Algae"},
+            {"x_center": 0.8, "y_center": 0.4, "radius": 0.1, "color": "goldenrod",  "label": "Synedra"},
+            {"x_center": 0.5, "y_center": 0.2, "radius": 0.1, "color": "firebrick",  "label": "2-MIB"}
         ]
 
-        # 원(Circle) 및 라벨 추가
         for param in parameters:
             fig_circles.add_shape(
                 type="circle",
@@ -307,7 +295,6 @@ with col2:
                 fillcolor=param["color"],
                 line=dict(color=param["color"]),
             )
-            # 라벨 추가
             fig_circles.add_annotation(
                 x=param["x_center"],
                 y=param["y_center"],
@@ -318,9 +305,8 @@ with col2:
                 yanchor="middle"
             )
 
-        # 레이아웃 설정
         fig_circles.update_layout(
-            title="🔵 Raw Water Quality Parameters",
+            title="🔵 Key Parameters of Water Quality",  # 차트 타이틀 변경
             showlegend=False,
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
@@ -328,9 +314,10 @@ with col2:
             height=600,
             plot_bgcolor='white'
         )
-
-        # 차트 출력
         st.plotly_chart(fig_circles, use_container_width=True)
+        # -----------------------------------------
+        # 수정된 부분 (수정 예시 1) 끝
+        # -----------------------------------------
 
 # 메인 타이틀
 st.title("📊 Connected Process Flow Chart & Simulator")
@@ -338,7 +325,6 @@ st.title("📊 Connected Process Flow Chart & Simulator")
 # Disinfection 프로세스가 선택된 경우
 if st.session_state.selected_process.startswith("4️⃣"):
     # Disinfection 프로세스에 대한 특정 그래프 표시
-    # 'disinfection_inputs'가 세션 상태에 있는지 확인
     if 'disinfection_inputs' not in st.session_state:
         st.warning("사이드바에서 Disinfection 프로세스의 입력을 설정해 주세요.")
     else:
@@ -356,28 +342,42 @@ if st.session_state.selected_process.startswith("4️⃣"):
         
         # EPA 모델에서 k1, k2 계산
         try:
-            k1_EPA = np.exp(-0.442 + 0.889 * np.log(DOC) + 0.345 * np.log(7.6 * NH3) - 1.082 * np.log(Cl0) + 0.192 * np.log(Cl0 / DOC))
-            k2_EPA = np.exp(-4.817 + 1.187 * np.log(DOC) + 0.102 * np.log(7.6 * NH3) - 0.821 * np.log(Cl0) - 0.271 * np.log(Cl0 / DOC))
+            k1_EPA = np.exp(-0.442 + 0.889 * np.log(DOC) + 0.345 * np.log(7.6 * NH3) 
+                            - 1.082 * np.log(Cl0) + 0.192 * np.log(Cl0 / DOC))
+            k2_EPA = np.exp(-4.817 + 1.187 * np.log(DOC) + 0.102 * np.log(7.6 * NH3) 
+                            - 0.821 * np.log(Cl0) - 0.271 * np.log(Cl0 / DOC))
         except:
             st.error("EPA 모델 계산을 위한 입력값이 유효하지 않습니다.")
             st.stop()
         
         # Two-phase 모델에서 A, k1, k2 계산
         try:
-            A_Two_phase = np.exp(0.168 - 0.148 * np.log(Cl0 / DOC) + 0.29 * np.log(1) - 0.41 * np.log(Cl0) + 0.038 * np.log(1) + 0.0554 * np.log(NH3) + 0.185 * np.log(Temp))
-            k1_Two_phase = np.exp(5.41 - 0.38 * np.log(Cl0 / DOC) + 0.274 * np.log(NH3) - 1.12 * np.log(Temp) + 0.05 * np.log(1) - 0.854 * np.log(7))
-            k2_Two_phase = np.exp(-7.13 + 0.864 * np.log(Cl0 / DOC) + 2.63 * np.log(DOC) - 2.55 * np.log(Cl0) + 0.62 * np.log(1) + 0.16 * np.log(1) + 0.48 * np.log(NH3) + 1.03 * np.log(Temp))
+            A_Two_phase = np.exp(
+                0.168 - 0.148 * np.log(Cl0 / DOC) + 0.29 * np.log(1) - 0.41 * np.log(Cl0)
+                + 0.038 * np.log(1) + 0.0554 * np.log(NH3) + 0.185 * np.log(Temp)
+            )
+            k1_Two_phase = np.exp(
+                5.41 - 0.38 * np.log(Cl0 / DOC) + 0.274 * np.log(NH3)
+                - 1.12 * np.log(Temp) + 0.05 * np.log(1) - 0.854 * np.log(7)
+            )
+            k2_Two_phase = np.exp(
+                -7.13 + 0.864 * np.log(Cl0 / DOC) + 2.63 * np.log(DOC)
+                - 2.55 * np.log(Cl0) + 0.62 * np.log(1) + 0.16 * np.log(1)
+                + 0.48 * np.log(NH3) + 1.03 * np.log(Temp)
+            )
         except:
             st.error("Two-phase 모델 계산을 위한 입력값이 유효하지 않습니다.")
             st.stop()
         
-        # 시간에 따른 농도 계산
+        # 시간 범위
         time_range = np.linspace(0, max_time, 100)
         
         # EPA 모델 (원래 입력값으로 계산)
-        C_EPA = np.where(time_range <= 5,
-                         Cl0 * np.exp(-k1_EPA * time_range),
-                         Cl0 * np.exp(5 * (k2_EPA - k1_EPA)) * np.exp(-k2_EPA * time_range))
+        C_EPA = np.where(
+            time_range <= 5,
+            Cl0 * np.exp(-k1_EPA * time_range),
+            Cl0 * np.exp(5 * (k2_EPA - k1_EPA)) * np.exp(-k2_EPA * time_range)
+        )
         
         # 시간에 비례한 랜덤 변동 추가 (최대 20%)
         def apply_time_based_variation(array, max_time):
@@ -388,21 +388,28 @@ if st.session_state.selected_process.startswith("4️⃣"):
         C_EPA_varied = apply_time_based_variation(C_EPA, max_time)
         
         # Two-phase 모델 (원래 입력값으로 계산)
-        C_Two_phase = Cl0 * (A_Two_phase * np.exp(-k1_Two_phase * time_range) + (1 - A_Two_phase) * np.exp(-k2_Two_phase * time_range))
+        C_Two_phase = Cl0 * (
+            A_Two_phase * np.exp(-k1_Two_phase * time_range) 
+            + (1 - A_Two_phase) * np.exp(-k2_Two_phase * time_range)
+        )
         
         # EPA 모델 (사용자가 설정한 k1, k2 범위로 High, Low 계산)
-        C_EPA_low = np.where(time_range <= 5,
-                             Cl0 * np.exp(-k1_low * time_range),
-                             Cl0 * np.exp(5 * (k2_low - k1_low)) * np.exp(-k2_low * time_range))
+        C_EPA_low = np.where(
+            time_range <= 5,
+            Cl0 * np.exp(-k1_low * time_range),
+            Cl0 * np.exp(5 * (k2_low - k1_low)) * np.exp(-k2_low * time_range)
+        )
         
-        C_EPA_high = np.where(time_range <= 5,
-                              Cl0 * np.exp(-k1_high * time_range),
-                              Cl0 * np.exp(5 * (k2_high - k1_high)) * np.exp(-k2_high * time_range))
+        C_EPA_high = np.where(
+            time_range <= 5,
+            Cl0 * np.exp(-k1_high * time_range),
+            Cl0 * np.exp(5 * (k2_high - k1_high)) * np.exp(-k2_high * time_range)
+        )
         
         # 그래프 그리기
         plt.figure(figsize=(10, 6))
         plt.plot(time_range, C_EPA_varied, label='실측데이터 (Virtually Generated)', color='blue', linewidth=3.5)
-        #plt.plot(time_range, C_Two_phase, label='Two-phase Model (Original Input)', color='green', linewidth=2.5)
+        # plt.plot(time_range, C_Two_phase, label='Two-phase Model (Original Input)', color='green', linewidth=2.5)
         plt.plot(time_range, C_EPA_low, label='EPA Model Low (User Input)', color='orange', linestyle='--', linewidth=2.5)
         plt.plot(time_range, C_EPA_high, label='EPA Model High (User Input)', color='red', linestyle='--', linewidth=2.5)
         plt.xlabel('Time (hrs)')
@@ -412,7 +419,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
         plt.grid(True)
         st.pyplot(plt)
         
-        # 결과가 범위 내에 있는지 여부를 체크 (0.5시간 이후만)
+        # 결과가 범위 내에 있는지 여부를 체크 (0.5시간 이후만 확인)
         is_normal = np.all((C_EPA_varied >= C_EPA_low) & (C_EPA_varied <= C_EPA_high))
         is_initial_phase = time_range <= 0.5
         if is_normal or np.all(is_initial_phase):
@@ -421,16 +428,13 @@ if st.session_state.selected_process.startswith("4️⃣"):
         else:
             st.subheader("결과: 비정상")
             st.markdown("<h1 style='text-align: center; color: red;'>비정상</h1>", unsafe_allow_html=True)
+
 else:
     # Disinfection 외의 프로세스가 선택된 경우, 기존의 상세 정보 및 시계열 데이터 표시
-    # 시계열 데이터 가져오기
     selected_process_name = st.session_state.selected_process.split(" ", 1)[1]
     timeseries_df = get_timeseries_data(selected_process_name)
     
-    # 선택된 프로세스에 따른 상세 정보 및 시계열 차트
     st.subheader(f"📌 {st.session_state.selected_process} Details and Data")
-    
-    # 상세 설명 및 시계열 데이터 표시
     st.markdown(process_descriptions.get(st.session_state.selected_process, "Select a process from the sidebar."))
     st.plotly_chart(create_timeseries_chart(timeseries_df, selected_process_name), use_container_width=True)
 
