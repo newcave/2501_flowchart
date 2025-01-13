@@ -245,7 +245,7 @@ with st.sidebar:
     st.info(f"🔍 **Selected Process:** {st.session_state.selected_process}")
 
 # 메인 레이아웃
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([1, 1])  # Changed from [2, 1] to [1, 1] to reduce distance
 
 with col1:
     # Flow-Chart (Agraph)
@@ -289,18 +289,24 @@ with col2:
             Node(id="Synedra",   label="Synedra",   size=30, color="#F79646"),  # 주황
             Node(id="2-MIB",     label="2-MIB",     size=30, color="#C0504D")   # 붉은색
         ]
-        # 이번에는 간단히 노드 간 연결(엣지) 없이 4개의 노드만 표시
-        edge_list = []
+        # 엣지 정의: 노드 간 연결 추가
+        edge_list = [
+            Edge(source="Manganese", target="Algae", label="→"),
+            Edge(source="Algae", target="Synedra", label="→"),
+            Edge(source="Synedra", target="2-MIB", label="→"),
+            Edge(source="2-MIB", target="Manganese", label="→"),
+        ]
 
         # 두 번째 Agraph 설정
         config2 = Config(
             height=600,
             width=600,
-            directed=False,
+            directed=True,  # Changed to True to show directed edges
             physics=True,
+            hierarchical=False,
             nodeHighlightBehavior=True,
             node={'color': '#ADD8E6'},
-            link={'color': '#808080', 'labelHighlightBold': True}
+            link={'color': '#808080', 'labelHighlightBold': True},
         )
 
         # Agraph 출력
