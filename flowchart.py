@@ -272,4 +272,4 @@ st.plotly_chart(create_timeseries_chart(timeseries_df, selected_process_name), u
 
 # 푸터
 st.markdown("---")
-st.markdown("ⓒ 2025 K-water AI Lab | Contact: sunghoonkim@kwater.or.kr
+st.markdown("ⓒ 2025 K-water AI Lab | Contact: sunghoonkim@kwater.or.kr")
