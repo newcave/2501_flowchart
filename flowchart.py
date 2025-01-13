@@ -43,7 +43,15 @@ process_descriptions = {
 
 # 함수: 노드 색상 및 테두리 업데이트
 def get_nodes(selected):
-    selected_id = selected.split()[2][0]  # "A" ~ "F"
+    # selected = "1️⃣ Raw Water Quality Prediction"
+    try:
+        # 첫 번째 단어에서 숫자 추출 (예: "1️⃣"에서 "1" 추출)
+        number_str = selected.split()[0][0]
+        number = int(number_str)
+        selected_id = chr(64 + number)  # 1 -> 'A', 2 -> 'B', ..., 6 -> 'F'
+    except (IndexError, ValueError):
+        selected_id = 'A'  # 기본값 설정 (필요에 따라 변경 가능)
+    
     nodes = []
     for node_id in ["A", "B", "C", "D", "E", "F"]:
         if node_id == selected_id:
