@@ -97,7 +97,7 @@ def get_nodes(selected):
             Node(
                 id=node_id,
                 label=f"Process {node_id}\n({process_labels[node_id]})",
-                size=35,
+                size=32,
                 color=node_color
             )
         )
@@ -119,7 +119,7 @@ def get_edges():
 def get_config():
     config = Config(
         height=600,
-        width=800,
+        width=700,
         directed=True,
         physics=True,
         hierarchical=False,
