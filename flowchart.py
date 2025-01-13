@@ -1,10 +1,11 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_agraph import agraph, Node, Edge, Config
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
-from PIL import Image  # Image 모듈 임포트
+from PIL import Image
 
 # 페이지 설정
 st.set_page_config(
@@ -17,7 +18,6 @@ st.set_page_config(
 if 'selected_process' not in st.session_state:
     st.session_state.selected_process = "1️⃣ Raw Water Quality Prediction"
 
-# 리디렉션 플래그 초기화
 if 'redirected' not in st.session_state:
     st.session_state.redirected = False
 
@@ -46,6 +46,19 @@ process_descriptions = {
     "E": "**DPBs:** Managing Deposits, Pitting, and Corrosion in water systems.",
     "F": "**Water Demand:** Assessing and meeting the water demand requirements."
 }
+
+# 프로세스 A 선택 시 리디렉션
+if st.session_state.selected_process.startswith("1️⃣") and not st.session_state.redirected:
+    components.html(
+        """
+        <script>
+            window.location.href = "https://mn-prediction-kwaterailab.streamlit.app/";
+        </script>
+        """,
+        height=0,
+        width=0
+    )
+    st.session_state.redirected = True
 
 # 함수: 노드 색상 및 테두리 업데이트
 def get_nodes(selected):
@@ -253,28 +266,27 @@ with col1:
         st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
 
 with col2:
-    # 기존의 Plotly 원 그래프 대신 리디렉션 기능 추가
     # **프로세스 A 선택 시 리디렉션**
     if st.session_state.selected_process.startswith("1️⃣"):
         if not st.session_state.redirected:
-            redirect_script = """
-            <script>
-                window.location.href = "https://mn-prediction-kwaterailab.streamlit.app/";
-            </script>
-            """
-            st.markdown(redirect_script, unsafe_allow_html=True)
+            components.html(
+                """
+                <script>
+                    window.location.href = "https://mn-prediction-kwaterailab.streamlit.app/";
+                </script>
+                """,
+                height=0,
+                width=0
+            )
             st.session_state.redirected = True
     else:
         # **프로세스 A가 아닐 때**
+        # 기존의 Plotly 원 그래프 대신 빈 공간 또는 다른 내용을 표시할 수 있습니다.
         st.markdown("### 🔵🟢🔴 프로세스 상태")
-        # 여기에 다른 내용을 추가할 수 있습니다. 현재는 빈 공간으로 유지합니다.
         st.write("")
 
 # 메인 타이틀
 st.title("📊 Connected Process Flow Chart & Simulator")
-
-# **프로세스 A 선택 시 다른 앱으로 리디렉션**
-# col2에서 이미 리디렉션을 처리했으므로, 추가로 메인 영역에서 다시 처리하지 않습니다.
 
 # Disinfection 프로세스가 선택된 경우
 if st.session_state.selected_process.startswith("4️⃣"):
