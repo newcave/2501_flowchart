@@ -248,6 +248,7 @@ with st.sidebar:
 col1, col2 = st.columns([1, 1])  # Changed from [2, 1] to [1, 1] to reduce distance
 
 with col1:
+    st.subheader("🔵 Processes Configurations 🔵")
     # Flow-Chart (Agraph)
     nodes = get_nodes(st.session_state.selected_process)
     edges = get_edges()
@@ -279,7 +280,7 @@ with col2:
         st.info("🔄 Manganese Prediction in reservoirs")
         st.markdown("[👉 Click](https://mn-prediction-kwaterailab.streamlit.app/)")
     else:
-        st.subheader(f"🔵 {process_name} - Key Parameters")
+        st.subheader(f"** {process_name} - Key Parameters")
 
         # 4개 노드만 있는 Agraph 구성
         # (1) Manganese, (2) Algae, (3) Synedra, (4) 2-MIB
