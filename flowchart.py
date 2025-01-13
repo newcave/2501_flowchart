@@ -64,7 +64,7 @@ if st.session_state.selected_process.startswith("1️⃣") and not st.session_st
 def get_nodes(selected):
     try:
         # 첫 번째 단어에서 숫자 추출 (예: "1️⃣"에서 "1" 추출)
-        number_str = selected.split()[0][0]
+        number_str = selected.split()[0][0]  # '1'
         number = int(number_str)
         selected_id = chr(64 + number)  # 1 -> 'A', 2 -> 'B', ..., 6 -> 'F'
     except (IndexError, ValueError):
@@ -97,7 +97,7 @@ def get_nodes(selected):
             Node(
                 id=node_id,
                 label=f"Process {node_id}\n({process_labels[node_id]})",
-                size=50,
+                size=30,
                 color=node_color
             )
         )
@@ -119,7 +119,7 @@ def get_edges():
 def get_config():
     config = Config(
         height=600,
-        width=1200,
+        width=800,
         directed=True,
         physics=True,
         hierarchical=False,
@@ -166,8 +166,8 @@ def create_timeseries_chart(df, process_name):
         xaxis_title="Date",
         yaxis_title="Measurement Value",
         autosize=True,
-        width=800,   # 필요에 따라 조정
-        height=400,  # 필요에 따라 조정
+        width=800,
+        height=400,
         plot_bgcolor='white'
     )
 
@@ -244,18 +244,18 @@ with st.sidebar:
     st.write("---")
     st.info(f"🔍 **Selected Process:** {st.session_state.selected_process}")
 
-# Streamlit Columns: 메인 플로우 차트과 리디렉션 또는 기타 기능을 위한 공간 배치
+# 메인 레이아웃 구성
 col1, col2 = st.columns([3, 1])  # 비율을 조정하여 공간 배분
 
 with col1:
-    # Flow-Chart 항상 표시
+    # Flow-Chart 표시
     nodes = get_nodes(st.session_state.selected_process)
     edges = get_edges()
     config = get_config()
     
     response = agraph(nodes=nodes, edges=edges, config=config)
 
-    # 선택된 노드 처리
+    # 노드 클릭 시, 세션 상태 업데이트
     if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
         clicked_node_id = response['clickedNodes'][0]['id']
         # 프로세스 번호 매핑 (A-F -> 1-6)
@@ -264,19 +264,27 @@ with col1:
         process_name = process_labels.get(clicked_node_id, "Unknown Process")
         st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
 
+# -------------------------------------------------------------
+# 에러 방지를 위해 process_name을 미리 정의(노드 미클릭 시에도 사용)
+# -------------------------------------------------------------
+try:
+    # '1️⃣' 같은 이모지+숫자 형식에서 숫자만 추출 (예: '1')
+    number_str = st.session_state.selected_process.split()[0][0]
+    number = int(number_str)  # 1
+    fallback_node_id = chr(64 + number)  # 1 -> 'A'
+    process_name = process_labels.get(fallback_node_id, "Unknown Process")
+except (IndexError, ValueError):
+    process_name = "Unknown Process"
+
 with col2:
-    # **프로세스 A 선택 시 리디렉션**
+    # 프로세스 A 선택 시 리디렉션 안내
     if st.session_state.selected_process.startswith("1️⃣"):
         st.info("🔄 Manganese Prediction in reservoirs")
         st.markdown("[👉 Click](https://mn-prediction-kwaterailab.streamlit.app/)")
     else:
-        # -----------------------------------------
-        # 수정된 부분 (수정 예시 1) 시작
-        # -----------------------------------------
-        st.subheader(f"🔵 {process_name} - Water Quality Parameters")  # 서브헤더 문구 변경
+        st.subheader(f"🔵 {process_name} - Water Quality Parameters")
 
         fig_circles = go.Figure()
-        # Circle에 표시될 파라미터 (원본 유지, 필요 시 변경 가능)
         parameters = [
             {"x_center": 0.5, "y_center": 0.8, "radius": 0.1, "color": "steelblue",  "label": "Manganese"},
             {"x_center": 0.2, "y_center": 0.4, "radius": 0.1, "color": "forestgreen","label": "Algae"},
@@ -306,7 +314,7 @@ with col2:
             )
 
         fig_circles.update_layout(
-            title="🔵 Key Parameters of Water Quality",  # 차트 타이틀 변경
+            title="🔵 Key Parameters of Water Quality",
             showlegend=False,
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
@@ -315,16 +323,12 @@ with col2:
             plot_bgcolor='white'
         )
         st.plotly_chart(fig_circles, use_container_width=True)
-        # -----------------------------------------
-        # 수정된 부분 (수정 예시 1) 끝
-        # -----------------------------------------
 
 # 메인 타이틀
 st.title("📊 Connected Process Flow Chart & Simulator")
 
-# Disinfection 프로세스가 선택된 경우
+# Disinfection 프로세스일 경우 전용 그래프 표시
 if st.session_state.selected_process.startswith("4️⃣"):
-    # Disinfection 프로세스에 대한 특정 그래프 표시
     if 'disinfection_inputs' not in st.session_state:
         st.warning("사이드바에서 Disinfection 프로세스의 입력을 설정해 주세요.")
     else:
@@ -382,8 +386,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
         # 시간에 비례한 랜덤 변동 추가 (최대 20%)
         def apply_time_based_variation(array, max_time):
             variation_factors = 1 + (time_range / max_time * 2) * np.random.uniform(-0.2, 0.4, size=array.shape)
-            varied_array = array * variation_factors
-            return varied_array
+            return array * variation_factors
         
         C_EPA_varied = apply_time_based_variation(C_EPA, max_time)
         
@@ -406,7 +409,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
             Cl0 * np.exp(5 * (k2_high - k1_high)) * np.exp(-k2_high * time_range)
         )
         
-        # 그래프 그리기
+        # 그래프 그리기 (Matplotlib)
         plt.figure(figsize=(10, 6))
         plt.plot(time_range, C_EPA_varied, label='실측데이터 (Virtually Generated)', color='blue', linewidth=3.5)
         # plt.plot(time_range, C_Two_phase, label='Two-phase Model (Original Input)', color='green', linewidth=2.5)
@@ -419,7 +422,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
         plt.grid(True)
         st.pyplot(plt)
         
-        # 결과가 범위 내에 있는지 여부를 체크 (0.5시간 이후만 확인)
+        # 결과가 범위 내에 있는지 여부 체크 (0.5시간 이후부터)
         is_normal = np.all((C_EPA_varied >= C_EPA_low) & (C_EPA_varied <= C_EPA_high))
         is_initial_phase = time_range <= 0.5
         if is_normal or np.all(is_initial_phase):
@@ -430,7 +433,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
             st.markdown("<h1 style='text-align: center; color: red;'>비정상</h1>", unsafe_allow_html=True)
 
 else:
-    # Disinfection 외의 프로세스가 선택된 경우, 기존의 상세 정보 및 시계열 데이터 표시
+    # Disinfection 외의 프로세스가 선택된 경우
     selected_process_name = st.session_state.selected_process.split(" ", 1)[1]
     timeseries_df = get_timeseries_data(selected_process_name)
     
