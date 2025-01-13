@@ -282,10 +282,56 @@ with col2:
 #            )
 #            st.session_state.redirected = True
     else:
-        # **프로세스 A가 아닐 때**
-        # 기존의 Plotly 원 그래프 대신 빈 공간 또는 다른 내용을 표시할 수 있습니다.
-        st.markdown("### 🔵🟢🔴 프로세스 상태")
-        st.write("")
+    else:
+        st.subheader(f"🔵 {process_name} - Raw Water Quality Flow Chart")
+
+        # Plotly를 사용한 Circle Flow Chart 생성
+        fig_circles = go.Figure()
+
+        # 각 원의 위치와 색상, 라벨 정의
+        parameters = [
+            {"x_center": 0.5, "y_center": 0.8, "radius": 0.1, "color": "steelblue", "label": "Manganese"},
+            {"x_center": 0.2, "y_center": 0.4, "radius": 0.1, "color": "forestgreen", "label": "Algae"},
+            {"x_center": 0.8, "y_center": 0.4, "radius": 0.1, "color": "goldenrod", "label": "Synedra"},
+            {"x_center": 0.5, "y_center": 0.2, "radius": 0.1, "color": "firebrick", "label": "2-MIB"}
+        ]
+
+        # 원(Circle) 및 라벨 추가
+        for param in parameters:
+            fig_circles.add_shape(
+                type="circle",
+                xref="paper", yref="paper",
+                x0=param["x_center"] - param["radius"],
+                y0=param["y_center"] - param["radius"],
+                x1=param["x_center"] + param["radius"],
+                y1=param["y_center"] + param["radius"],
+                fillcolor=param["color"],
+                line=dict(color=param["color"]),
+            )
+            # 라벨 추가
+            fig_circles.add_annotation(
+                x=param["x_center"],
+                y=param["y_center"],
+                text=param["label"],
+                showarrow=False,
+                font=dict(color="white", size=14, family="Arial"),
+                xanchor="center",
+                yanchor="middle"
+            )
+
+        # 레이아웃 설정
+        fig_circles.update_layout(
+            title="🔵 Raw Water Quality Parameters",
+            showlegend=False,
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            width=600,
+            height=600,
+            plot_bgcolor='white'
+        )
+
+        # 차트 출력
+        st.plotly_chart(fig_circles, use_container_width=True)
 
 # 메인 타이틀
 st.title("📊 Connected Process Flow Chart & Simulator")
