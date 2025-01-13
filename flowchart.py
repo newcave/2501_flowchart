@@ -26,14 +26,30 @@ st.title("📊 6-Step Process Flow Chart & Random Time Series Data")
 
 # Process Flow Chart - Graphviz
 st.subheader("🔗 Overall Process Overview")
-flow_chart = graphviz.Digraph(format='png')
+flow_chart = graphviz.Digraph(
+    format='png',
+    engine='dot'  # You can experiment with different engines like 'circo' or 'neato' for alternative layouts
+)
+
+# Graph attributes for compactness
+flow_chart.attr(
+    rankdir='LR',          # Left to Right layout
+    nodesep='0.5',         # Space between nodes
+    ranksep='0.5',         # Space between ranks
+    fontsize='10',         # Smaller font size
+    size='8,5!',            # Fixed size with aspect ratio
+    ratio='compress'       # Compress the layout to fit the size
+)
 
 # Node style configuration
 node_style = {
     'shape': 'box',
     'style': 'filled',
     'color': 'lightblue',
-    'fontname': 'Helvetica'
+    'fontname': 'Helvetica',
+    'fontsize': '10',      # Smaller font size for nodes
+    'width': '1.5',        # Fixed width
+    'height': '0.75'       # Fixed height
 }
 
 # 6-Step Process Nodes (Rectangle)
@@ -45,12 +61,12 @@ flow_chart.node("E", "Process E\n(Packaging)", **node_style)
 flow_chart.node("F", "Process F\n(Shipping)", **node_style)
 
 # Clockwise Connections (Left 3 → Right 3)
-flow_chart.edge("A", "B", label="→")
-flow_chart.edge("B", "C", label="→")
-flow_chart.edge("C", "D", label="↓")
-flow_chart.edge("D", "E", label="→")
-flow_chart.edge("E", "F", label="→")
-flow_chart.edge("F", "A", label="↑")  # Circular connection
+flow_chart.edge("A", "B", label="→", fontsize='8')
+flow_chart.edge("B", "C", label="→", fontsize='8')
+flow_chart.edge("C", "D", label="↓", fontsize='8')
+flow_chart.edge("D", "E", label="→", fontsize='8')
+flow_chart.edge("E", "F", label="→", fontsize='8')
+flow_chart.edge("F", "A", label="↑", fontsize='8')  # Circular connection
 
 # Display the flow chart
 st.graphviz_chart(flow_chart, use_container_width=True)
@@ -82,8 +98,8 @@ def generate_random_timeseries(process_name, points=50):
         xaxis_title="Date",
         yaxis_title="Measurement Value",
         autosize=True,
-        width=800,   # Reduced width for better fit
-        height=400,  # Reduced height for better fit
+        width=800,   # Adjust as needed
+        height=400,  # Adjust as needed
         plot_bgcolor='white'
     )
 
@@ -92,29 +108,17 @@ def generate_random_timeseries(process_name, points=50):
 # Selected process description and time series chart
 st.subheader(f"📌 {selected_process} Details and Data")
 
-if selected_process == "1️⃣ Process A":
-    st.write("**Process A (Material Collection):** Collecting and inspecting raw materials for production.")
-    st.plotly_chart(generate_random_timeseries("Process A"), use_container_width=True)
+process_descriptions = {
+    "1️⃣ Process A": "**Process A (Material Collection):** Collecting and inspecting raw materials for production.",
+    "2️⃣ Process B": "**Process B (Processing):** Processing raw materials into suitable forms for production.",
+    "3️⃣ Process C": "**Process C (Assembly):** Assembling processed parts into finished products.",
+    "4️⃣ Process D": "**Process D (Quality Inspection):** Inspecting product quality and removing defective items.",
+    "5️⃣ Process E": "**Process E (Packaging):** Packaging the inspected products for shipment.",
+    "6️⃣ Process F": "**Process F (Shipping):** Shipping packaged products to customers."
+}
 
-elif selected_process == "2️⃣ Process B":
-    st.write("**Process B (Processing):** Processing raw materials into suitable forms for production.")
-    st.plotly_chart(generate_random_timeseries("Process B"), use_container_width=True)
-
-elif selected_process == "3️⃣ Process C":
-    st.write("**Process C (Assembly):** Assembling processed parts into finished products.")
-    st.plotly_chart(generate_random_timeseries("Process C"), use_container_width=True)
-
-elif selected_process == "4️⃣ Process D":
-    st.write("**Process D (Quality Inspection):** Inspecting product quality and removing defective items.")
-    st.plotly_chart(generate_random_timeseries("Process D"), use_container_width=True)
-
-elif selected_process == "5️⃣ Process E":
-    st.write("**Process E (Packaging):** Packaging the inspected products for shipment.")
-    st.plotly_chart(generate_random_timeseries("Process E"), use_container_width=True)
-
-elif selected_process == "6️⃣ Process F":
-    st.write("**Process F (Shipping):** Shipping packaged products to customers.")
-    st.plotly_chart(generate_random_timeseries("Process F"), use_container_width=True)
+st.write(process_descriptions.get(selected_process, "Select a process from the sidebar."))
+st.plotly_chart(generate_random_timeseries(selected_process.split()[1]), use_container_width=True)
 
 # Footer
 st.markdown("---")
