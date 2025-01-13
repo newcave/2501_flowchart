@@ -15,23 +15,40 @@ st.set_page_config(
 if 'selected_process' not in st.session_state:
     st.session_state.selected_process = "1️⃣ Process A"
 
-# 함수: 노드 색상 업데이트
+# 함수: 노드 색상 및 테두리 업데이트
 def get_nodes(selected):
-    node_colors = {}
+    selected_id = selected[-1]  # "A" ~ "F"
+    nodes = []
     for node_id in ["A", "B", "C", "D", "E", "F"]:
-        if node_id == selected[-1]:  # 선택된 프로세스의 마지막 문자 (A-F)
-            node_colors[node_id] = "#FFA07A"  # 선택된 노드 색상 (연어색)
+        if node_id == selected_id:
+            # 선택된 노드: 배경색 변경 및 테두리 색상 변경
+            node_color = {
+                "background": "#FFA07A",  # 연어색
+                "border": "#FF4500",      # 오렌지 레드 (테두리 색상)
+                "highlight": {
+                    "background": "#FF7F50",
+                    "border": "#FF6347"
+                }
+            }
         else:
-            node_colors[node_id] = "#ADD8E6"  # 기본 노드 색상 (연한 파랑)
-    
-    nodes = [
-        Node(id="A", label="Process A\n(Material Collection)", size=30, color=node_colors["A"]),
-        Node(id="B", label="Process B\n(Processing)", size=30, color=node_colors["B"]),
-        Node(id="C", label="Process C\n(Assembly)", size=30, color=node_colors["C"]),
-        Node(id="D", label="Process D\n(Quality Inspection)", size=30, color=node_colors["D"]),
-        Node(id="E", label="Process E\n(Packaging)", size=30, color=node_colors["E"]),
-        Node(id="F", label="Process F\n(Shipping)", size=30, color=node_colors["F"]),
-    ]
+            # 기본 노드 색상
+            node_color = {
+                "background": "#ADD8E6",  # 연한 파랑
+                "border": "#000000",      # 검정 테두리
+                "highlight": {
+                    "background": "#87CEFA",
+                    "border": "#000000"
+                }
+            }
+        
+        nodes.append(
+            Node(
+                id=node_id,
+                label=f"Process {node_id}\n({process_labels[node_id]})",
+                size=30,
+                color=node_color
+            )
+        )
     return nodes
 
 # 함수: 엣지 정의
@@ -60,6 +77,16 @@ def get_config():
     )
     return config
 
+# 프로세스 레이블
+process_labels = {
+    "A": "Material Collection",
+    "B": "Processing",
+    "C": "Assembly",
+    "D": "Quality Inspection",
+    "E": "Packaging",
+    "F": "Shipping"
+}
+
 # 상호작용 가능한 그래프 표시
 nodes = get_nodes(st.session_state.selected_process)
 edges = get_edges()
@@ -70,7 +97,9 @@ response = agraph(nodes=nodes, edges=edges, config=config)
 # 선택된 노드 처리
 if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
     clicked_node_id = response['clickedNodes'][0]['id']
-    st.session_state.selected_process = f"{['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣'][ord(clicked_node_id)-65]} Process {clicked_node_id}"
+    # 프로세스 번호 매핑 (A-F -> 1-6)
+    process_number = ord(clicked_node_id) - 64  # 'A'->1, 'B'->2, ...
+    st.session_state.selected_process = f"{process_number}️⃣ Process {clicked_node_id}"
 
 # 사이드바 설정
 with st.sidebar:
