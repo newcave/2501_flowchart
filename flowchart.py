@@ -26,8 +26,8 @@ def get_nodes(selected):
                 "background": "#FFA07A",  # 연어색
                 "border": "#FF4500",      # 오렌지 레드 (테두리 색상)
                 "highlight": {
-                    "background": "#FF7F50",
-                    "border": "#FF6347"
+                    "background": "#FFB347",
+                    "border": "#FF8C00"
                 }
             }
         else:
