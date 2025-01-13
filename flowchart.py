@@ -1,88 +1,84 @@
 import streamlit as st
-import graphviz
+from streamlit_agraph import agraph, Node, Edge, Config
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 
-# Page configuration
+# 페이지 설정
 st.set_page_config(
     page_title="6-Step Process Flow Chart",
     page_icon="🔄",
     layout="wide"
 )
 
-# Sidebar for process selection
+# 노드 정의
+nodes = [
+    Node(id="A", label="Process A\n(Material Collection)", size=30, color="#ADD8E6"),
+    Node(id="B", label="Process B\n(Processing)", size=30, color="#ADD8E6"),
+    Node(id="C", label="Process C\n(Assembly)", size=30, color="#ADD8E6"),
+    Node(id="D", label="Process D\n(Quality Inspection)", size=30, color="#ADD8E6"),
+    Node(id="E", label="Process E\n(Packaging)", size=30, color="#ADD8E6"),
+    Node(id="F", label="Process F\n(Shipping)", size=30, color="#ADD8E6"),
+]
+
+# 엣지 정의
+edges = [
+    Edge(source="A", target="B", label="→"),
+    Edge(source="B", target="C", label="→"),
+    Edge(source="C", target="D", label="↓"),
+    Edge(source="D", target="E", label="→"),
+    Edge(source="E", target="F", label="→"),
+    Edge(source="F", target="A", label="↑"),
+]
+
+# 그래프 설정
+config = Config(
+    height=600,
+    width=800,
+    directed=True,
+    physics=True,
+    hierarchical=False,
+    nodeHighlightBehavior=True,
+    node={'color': '#ADD8E6'},
+    link={'color': '#808080', 'labelHighlightBold': True},
+)
+
+# 상호작용 가능한 그래프 표시
+response = agraph(nodes=nodes, edges=edges, config=config)
+
+# 선택된 노드 처리
+selected_node = None
+if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
+    selected_node = response['clickedNodes'][0]['id']
+
+# 사이드바 설정
 with st.sidebar:
     st.title("⚙️ Select Process")
-    selected_process = st.radio(
-        "Choose a process to explore:",
-        ["1️⃣ Process A", "2️⃣ Process B", "3️⃣ Process C", "4️⃣ Process D", "5️⃣ Process E", "6️⃣ Process F"]
-    )
+    if selected_node:
+        selected_process = f"{selected_node}️⃣ Process {selected_node}"
+    else:
+        selected_process = st.radio(
+            "Choose a process to explore:",
+            ["1️⃣ Process A", "2️⃣ Process B", "3️⃣ Process C", "4️⃣ Process D", "5️⃣ Process E", "6️⃣ Process F"]
+        )
     st.write("---")
     st.info(f"🔍 **Selected Process:** {selected_process}")
 
-# Main Title
+# 메인 타이틀
 st.title("📊 6-Step Process Flow Chart & Random Time Series Data")
 
-# Process Flow Chart - Graphviz
-st.subheader("🔗 Overall Process Overview")
-flow_chart = graphviz.Digraph(
-    format='png',
-    engine='dot'  # You can experiment with different engines like 'circo' or 'neato' for alternative layouts
-)
-
-# Graph attributes for compactness
-flow_chart.attr(
-    rankdir='LR',          # Left to Right layout
-    nodesep='0.5',         # Space between nodes
-    ranksep='0.5',         # Space between ranks
-    fontsize='10',         # Smaller font size
-    size='8,5!',            # Fixed size with aspect ratio
-    ratio='compress'       # Compress the layout to fit the size
-)
-
-# Node style configuration
-node_style = {
-    'shape': 'box',
-    'style': 'filled',
-    'color': 'lightblue',
-    'fontname': 'Helvetica',
-    'fontsize': '10',      # Smaller font size for nodes
-    'width': '1.5',        # Fixed width
-    'height': '0.75'       # Fixed height
-}
-
-# 6-Step Process Nodes (Rectangle)
-flow_chart.node("A", "Process A\n(Material Collection)", **node_style)
-flow_chart.node("B", "Process B\n(Processing)", **node_style)
-flow_chart.node("C", "Process C\n(Assembly)", **node_style)
-flow_chart.node("D", "Process D\n(Quality Inspection)", **node_style)
-flow_chart.node("E", "Process E\n(Packaging)", **node_style)
-flow_chart.node("F", "Process F\n(Shipping)", **node_style)
-
-# Clockwise Connections (Left 3 → Right 3)
-flow_chart.edge("A", "B", label="→", fontsize='8')
-flow_chart.edge("B", "C", label="→", fontsize='8')
-flow_chart.edge("C", "D", label="↓", fontsize='8')
-flow_chart.edge("D", "E", label="→", fontsize='8')
-flow_chart.edge("E", "F", label="→", fontsize='8')
-flow_chart.edge("F", "A", label="↑", fontsize='8')  # Circular connection
-
-# Display the flow chart
-st.graphviz_chart(flow_chart, use_container_width=True)
-
-# Function to generate random time series data
+# 함수: 랜덤 시계열 데이터 생성
 def generate_random_timeseries(process_name, points=50):
     np.random.seed()
     dates = pd.date_range(start='2023-01-01', periods=points)
-    values = np.random.randn(points).cumsum()  # Random cumulative sum
+    values = np.random.randn(points).cumsum()  # 랜덤 누적 합
 
     df = pd.DataFrame({
         'Date': dates,
         'Value': values
     })
 
-    # Plotly chart
+    # Plotly 차트
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df['Date'],
@@ -98,14 +94,14 @@ def generate_random_timeseries(process_name, points=50):
         xaxis_title="Date",
         yaxis_title="Measurement Value",
         autosize=True,
-        width=800,   # Adjust as needed
-        height=400,  # Adjust as needed
+        width=800,   # 필요에 따라 조정
+        height=400,  # 필요에 따라 조정
         plot_bgcolor='white'
     )
 
     return fig
 
-# Selected process description and time series chart
+# 선택된 프로세스에 따른 상세 정보 및 시계열 차트
 st.subheader(f"📌 {selected_process} Details and Data")
 
 process_descriptions = {
@@ -114,12 +110,27 @@ process_descriptions = {
     "3️⃣ Process C": "**Process C (Assembly):** Assembling processed parts into finished products.",
     "4️⃣ Process D": "**Process D (Quality Inspection):** Inspecting product quality and removing defective items.",
     "5️⃣ Process E": "**Process E (Packaging):** Packaging the inspected products for shipment.",
-    "6️⃣ Process F": "**Process F (Shipping):** Shipping packaged products to customers."
+    "6️⃣ Process F": "**Process F (Shipping):** Shipping packaged products to customers.",
+    "A": "**Process A (Material Collection):** Collecting and inspecting raw materials for production.",
+    "B": "**Process B (Processing):** Processing raw materials into suitable forms for production.",
+    "C": "**Process C (Assembly):** Assembling processed parts into finished products.",
+    "D": "**Process D (Quality Inspection):** Inspecting product quality and removing defective items.",
+    "E": "**Process E (Packaging):** Packaging the inspected products for shipment.",
+    "F": "**Process F (Shipping):** Shipping packaged products to customers."
 }
 
-st.write(process_descriptions.get(selected_process, "Select a process from the sidebar."))
-st.plotly_chart(generate_random_timeseries(selected_process.split()[1]), use_container_width=True)
+# 프로세스 이름 추출
+if selected_process.startswith("1️⃣") or selected_process.startswith("2️⃣") or selected_process.startswith("3️⃣") \
+   or selected_process.startswith("4️⃣") or selected_process.startswith("5️⃣") or selected_process.startswith("6️⃣"):
+    process_key = selected_process.split()[1]  # "Process A" 등
+    process_id = selected_process.split()[1][-1]  # "A" 등
+else:
+    process_key = selected_process
+    process_id = selected_process
 
-# Footer
+st.markdown(process_descriptions.get(selected_process, process_descriptions.get(process_id, "Select a process from the sidebar.")))
+st.plotly_chart(generate_random_timeseries(process_key), use_container_width=True)
+
+# 푸터
 st.markdown("---")
 st.markdown("ⓒ 2025 K-water AI Lab | Contact: sunghoonkim@kwater.or.kr")
