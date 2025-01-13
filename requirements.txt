@@ -1,3 +1,4 @@
 graphviz
 plotly
 streamlit_agraph
+matplotlib
