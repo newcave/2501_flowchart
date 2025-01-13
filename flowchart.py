@@ -284,10 +284,10 @@ with col2:
         # 4개 노드만 있는 Agraph 구성
         # (1) Manganese, (2) Algae, (3) Synedra, (4) 2-MIB
         node_list = [
-            Node(id="Manganese", label="Manganese", size=30, color="#4F81BD"),  # 파랑
-            Node(id="Algae",     label="Algae",     size=30, color="#9BBB59"),  # 연두
-            Node(id="Synedra",   label="Synedra",   size=30, color="#F79646"),  # 주황
-            Node(id="2-MIB",     label="2-MIB",     size=30, color="#C0504D")   # 붉은색
+            Node(id="Manganese", label="Manganese", size=30, color="#4F81BD", shape='database'),  # 파랑
+            Node(id="Algae",     label="Algae",     size=30, color="#9BBB59", shape='box'),  # 연두
+            Node(id="Synedra",   label="Synedra",   size=30, color="#F79646", shape='ellipse'),  # 주황
+            Node(id="2-MIB",     label="2-MIB",     size=30, color="#C0504D", shape='ellipse')   # 붉은색
         ]
         # 엣지 정의: 노드 간 연결 추가
         edge_list = [
