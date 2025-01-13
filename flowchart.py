@@ -79,12 +79,12 @@ def get_config():
 
 # 프로세스 레이블
 process_labels = {
-    "A": "Material Collection",
-    "B": "Processing",
-    "C": "Assembly",
-    "D": "Quality Inspection",
-    "E": "Packaging",
-    "F": "Shipping"
+    "A": "Raw water Quality Prediction",
+    "B": "Coagulation/Flocculation",
+    "C": "Filtration",
+    "D": "Disinfection",
+    "E": "DPBs",
+    "F": "Water Demand"
 }
 
 # 상호작용 가능한 그래프 표시
