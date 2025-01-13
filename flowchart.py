@@ -119,7 +119,7 @@ def get_timeseries_data(process_name, points=50):
         st.session_state.timeseries_data = {}
     
     if process_name not in st.session_state.timeseries_data:
-        # 랜덤 시드 고정 (일관된 데이터 생성을 원할 경우)
+        # 랜덤 시드 고정 (일관된 데이터 생성)
         seed = hash(process_name) % (2**32)  # 프로세스 이름을 기반으로 시드 설정
         np.random.seed(seed)
         dates = pd.date_range(start='2023-01-01', periods=points)
@@ -133,34 +133,83 @@ def get_timeseries_data(process_name, points=50):
     
     return st.session_state.timeseries_data[process_name]
 
+# Plotly 시계열 차트 생성 함수
+def create_timeseries_chart(df, process_name):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df['Date'],
+        y=df['Value'],
+        mode='lines+markers',
+        line=dict(color='royalblue'),
+        marker=dict(size=4),
+        name=f'{process_name} Time Series'
+    ))
+
+    fig.update_layout(
+        title=f"📈 {process_name} - Random Time Series Data",
+        xaxis_title="Date",
+        yaxis_title="Measurement Value",
+        autosize=True,
+        width=800,   # 필요에 따라 조정
+        height=400,  # 필요에 따라 조정
+        plot_bgcolor='white'
+    )
+
+    return fig
+
 # 사이드바 설정
 with st.sidebar:
     st.title("⚙️ Select Process")
     
+    selected_process_sidebar = st.radio(
+        "Choose a process to explore:",
+        [
+            "1️⃣ Raw Water Quality Prediction",
+            "2️⃣ Coagulation/Flocculation",
+            "3️⃣ Filtration",
+            "4️⃣ Disinfection",
+            "5️⃣ DPBs",
+            "6️⃣ Water Demand"
+        ],
+        index=[
+            "1️⃣ Raw Water Quality Prediction",
+            "2️⃣ Coagulation/Flocculation",
+            "3️⃣ Filtration",
+            "4️⃣ Disinfection",
+            "5️⃣ DPBs",
+            "6️⃣ Water Demand"
+        ].index(st.session_state.selected_process)
+    )
+    
+    # 사이드바에서 선택된 경우, 세션 상태 업데이트
+    if selected_process_sidebar != st.session_state.selected_process:
+        st.session_state.selected_process = selected_process_sidebar
+    
+    # Disinfection 선택 시 추가 입력 슬라이더 표시
     if st.session_state.selected_process.startswith("4️⃣"):
-        # Disinfection 프로세스가 선택된 경우, 특정 입력 슬라이더와 이미지 표시
+        st.write("---")
+        st.header("모델 인풋 설정")
+        
         # 이미지 불러오기
         try:
             im = Image.open("AI_Lab_logo.jpg")
-            st.sidebar.image(im, caption=" ")  # 사이드바에 이미지 표시
+            st.image(im, caption=" ", use_column_width=True)  # 사이드바에 이미지 표시
         except FileNotFoundError:
-            st.sidebar.write("Logo image not found.")  # 이미지가 없을 때의 처리
-        
-        st.sidebar.header("모델 인풋 설정")
+            st.write("Logo image not found.")  # 이미지가 없을 때의 처리
         
         # 사용자 입력 받기
-        DOC = st.sidebar.slider("DOC (mg/L)", 0.0, 10.0, 5.0)
-        NH3 = st.sidebar.slider("surrogate var. (mg/L)", 0.0, 5.0, 0.5)
-        Cl0 = st.sidebar.slider("현재농도 Cl0 (mg/L)", 0.0, 5.0, 1.5)
-        Temp = st.sidebar.slider("Temperature (°C)", 0.0, 35.0, 20.0)
-        max_time = st.sidebar.slider("최대예측시간 (hrs)", 1, 24, 5)
+        DOC = st.slider("DOC (mg/L)", 0.0, 10.0, 5.0)
+        NH3 = st.slider("Surrogate Variable (mg/L)", 0.0, 5.0, 0.5)
+        Cl0 = st.slider("현재농도 Cl0 (mg/L)", 0.0, 5.0, 1.5)
+        Temp = st.slider("Temperature (°C)", 0.0, 35.0, 20.0)
+        max_time = st.slider("최대예측시간 (hrs)", 1, 24, 5)
         
         # 추가적인 사이드바 입력 (k1, k2 범위)
-        st.sidebar.header("EPA 모델 k1, k2 범위 설정")
-        k1_low = st.sidebar.slider("AI High1 (k1최대 적정범위)", 0.01, 5.0, 3.5)
-        k1_high = st.sidebar.slider("AI Low1 (k1최소 적정범위)", 0.01, 5.0, 2.0)
-        k2_low = st.sidebar.slider("AI High2 (k2최대 적정범위)", 0.01, 5.0, 0.1)
-        k2_high = st.sidebar.slider("AI Low2 (k1최소 적정범위)", 0.01, 5.0, 0.5)
+        st.header("EPA 모델 k1, k2 범위 설정")
+        k1_low = st.slider("AI High1 (k1 최대 적정범위)", 0.01, 5.0, 3.5)
+        k1_high = st.slider("AI Low1 (k1 최소 적정범위)", 0.01, 5.0, 2.0)
+        k2_low = st.slider("AI High2 (k2 최대 적정범위)", 0.01, 5.0, 0.1)
+        k2_high = st.slider("AI Low2 (k2 최소 적정범위)", 0.01, 5.0, 0.5)
         
         # Assign to session state
         if 'disinfection_inputs' not in st.session_state:
@@ -175,58 +224,29 @@ with st.sidebar:
         st.session_state.disinfection_inputs['k1_high'] = k1_high
         st.session_state.disinfection_inputs['k2_low'] = k2_low
         st.session_state.disinfection_inputs['k2_high'] = k2_high
-        
-        st.write("---")
-        st.info(f"🔍 **Selected Process:** {st.session_state.selected_process}")
-    else:
-        # 다른 프로세스가 선택된 경우, 기존 라디오 버튼 표시
-        selected_process_sidebar = st.radio(
-            "Choose a process to explore:",
-            [
-                "1️⃣ Raw Water Quality Prediction",
-                "2️⃣ Coagulation/Flocculation",
-                "3️⃣ Filtration",
-                "4️⃣ Disinfection",
-                "5️⃣ DPBs",
-                "6️⃣ Water Demand"
-            ],
-            index=[
-                "1️⃣ Raw Water Quality Prediction",
-                "2️⃣ Coagulation/Flocculation",
-                "3️⃣ Filtration",
-                "4️⃣ Disinfection",
-                "5️⃣ DPBs",
-                "6️⃣ Water Demand"
-            ].index(st.session_state.selected_process)
-        )
-        
-        # 사이드바에서 선택된 경우, 세션 상태 업데이트
-        if selected_process_sidebar != st.session_state.selected_process:
-            st.session_state.selected_process = selected_process_sidebar
-        
-        st.write("---")
-        st.info(f"🔍 **Selected Process:** {st.session_state.selected_process}")
+    
+    st.write("---")
+    st.info(f"🔍 **Selected Process:** {st.session_state.selected_process}")
 
 # Streamlit Columns: 메인 플로우 차트와 원의 집합을 나란히 배치
 col1, col2 = st.columns([3, 1])  # 비율을 조정하여 공간 배분
 
 with col1:
-    # Show flow chart only if not 'Disinfection'
-    if not st.session_state.selected_process.startswith("4️⃣"):
-        nodes = get_nodes(st.session_state.selected_process)
-        edges = get_edges()
-        config = get_config()
-        
-        response = agraph(nodes=nodes, edges=edges, config=config)
+    # Flow-Chart 항상 표시
+    nodes = get_nodes(st.session_state.selected_process)
+    edges = get_edges()
+    config = get_config()
+    
+    response = agraph(nodes=nodes, edges=edges, config=config)
 
-        # 선택된 노드 처리
-        if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
-            clicked_node_id = response['clickedNodes'][0]['id']
-            # 프로세스 번호 매핑 (A-F -> 1-6)
-            process_number = ord(clicked_node_id) - 64  # 'A'->1, 'B'->2, ...
-            # 프로세스 이름 가져오기
-            process_name = process_labels[clicked_node_id]
-            st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
+    # 선택된 노드 처리
+    if response and 'clickedNodes' in response and len(response['clickedNodes']) > 0:
+        clicked_node_id = response['clickedNodes'][0]['id']
+        # 프로세스 번호 매핑 (A-F -> 1-6)
+        process_number = ord(clicked_node_id) - 64  # 'A'->1, 'B'->2, ...
+        # 프로세스 이름 가져오기
+        process_name = process_labels.get(clicked_node_id, "Unknown Process")
+        st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
 
 with col2:
     st.markdown("### 🔵🟢🔴 프로세스 상태")
@@ -344,7 +364,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
         
         # 그래프 그리기
         plt.figure(figsize=(10, 6))
-        plt.plot(time_range, C_EPA_varied, label='실측데이터(virtually generated)', color='blue', linewidth=3.5)
+        plt.plot(time_range, C_EPA_varied, label='실측데이터 (Virtually Generated)', color='blue', linewidth=3.5)
         #plt.plot(time_range, C_Two_phase, label='Two-phase Model (Original Input)', color='green', linewidth=2.5)
         plt.plot(time_range, C_EPA_low, label='EPA Model Low (User Input)', color='orange', linestyle='--', linewidth=2.5)
         plt.plot(time_range, C_EPA_high, label='EPA Model High (User Input)', color='red', linestyle='--', linewidth=2.5)
@@ -369,30 +389,6 @@ else:
     # 시계열 데이터 가져오기
     selected_process_name = st.session_state.selected_process.split(" ", 1)[1]
     timeseries_df = get_timeseries_data(selected_process_name)
-    
-    # Plotly 차트 생성
-    def create_timeseries_chart(df, process_name):
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=df['Date'],
-            y=df['Value'],
-            mode='lines+markers',
-            line=dict(color='royalblue'),
-            marker=dict(size=4),
-            name=f'{process_name} Time Series'
-        ))
-
-        fig.update_layout(
-            title=f"📈 {process_name} - Random Time Series Data",
-            xaxis_title="Date",
-            yaxis_title="Measurement Value",
-            autosize=True,
-            width=800,   # 필요에 따라 조정
-            height=400,  # 필요에 따라 조정
-            plot_bgcolor='white'
-        )
-
-        return fig
     
     # 선택된 프로세스에 따른 상세 정보 및 시계열 차트
     st.subheader(f"📌 {st.session_state.selected_process} Details and Data")
