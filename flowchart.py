@@ -282,7 +282,6 @@ with col2:
 #            )
 #            st.session_state.redirected = True
     else:
-    else:
         st.subheader(f"🔵 {process_name} - Raw Water Quality Flow Chart")
 
         # Plotly를 사용한 Circle Flow Chart 생성
