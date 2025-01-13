@@ -268,17 +268,19 @@ with col1:
 with col2:
     # **프로세스 A 선택 시 리디렉션**
     if st.session_state.selected_process.startswith("1️⃣"):
-        if not st.session_state.redirected:
-            components.html(
-                """
-                <script>
-                    window.location.href = "https://mn-prediction-kwaterailab.streamlit.app/";
-                </script>
-                """,
-                height=0,
-                width=0
-            )
-            st.session_state.redirected = True
+        st.info("🔄 자동으로 연결되지 않는 경우, 아래 링크를 클릭하세요.")
+        st.markdown("[👉 여기를 클릭하여 이동](https://mn-prediction-kwaterailab.streamlit.app/)")
+#         if not st.session_state.redirected:
+#            components.html(
+#                """
+#                <script>
+#                    window.location.href = "https://mn-prediction-kwaterailab.streamlit.app/";
+#                </script>
+#                """,
+#                height=0,
+#                width=0
+#            )
+#            st.session_state.redirected = True
     else:
         # **프로세스 A가 아닐 때**
         # 기존의 Plotly 원 그래프 대신 빈 공간 또는 다른 내용을 표시할 수 있습니다.
