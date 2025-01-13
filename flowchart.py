@@ -119,7 +119,7 @@ def get_edges():
 def get_config():
     config = Config(
         height=600,
-        width=700,
+        width=800,
         directed=True,
         physics=True,
         hierarchical=False,
