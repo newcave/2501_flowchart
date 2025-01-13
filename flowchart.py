@@ -245,7 +245,7 @@ with st.sidebar:
     st.info(f"🔍 **Selected Process:** {st.session_state.selected_process}")
 
 # 메인 레이아웃
-col1, col2 = st.columns([3, 1])
+col1, col2 = st.columns([2, 1])
 
 with col1:
     # Flow-Chart (Agraph)
