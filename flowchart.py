@@ -398,7 +398,7 @@ if st.session_state.selected_process.startswith("4️⃣"):
         )
         
         # 그래프 그리기
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(5, 3))
         plt.plot(time_range, C_EPA_varied, label='실측데이터 (Virtually Generated)', color='blue', linewidth=3.5)
         # plt.plot(time_range, C_Two_phase, label='Two-phase Model (Original Input)', color='green', linewidth=2.5)
         plt.plot(time_range, C_EPA_low, label='EPA Model Low (User Input)', color='orange', linestyle='--', linewidth=2.5)
