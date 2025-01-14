@@ -48,11 +48,17 @@ process_descriptions = {
 }
 
 # 프로세스 A 선택 시 리디렉션
-if st.session_state.selected_process.startswith("1️⃣") and not st.session_state.redirected:
+# Also handle redirection for "3️⃣ Filtration"
+process_links = {
+    "1️⃣ Raw Water Quality Prediction": "https://mn-prediction-kwaterailab.streamlit.app/",
+    "3️⃣ Filtration": "https://filtration-app.streamlit.app/"  # Replace with your actual Filtration app URL
+}
+
+if st.session_state.selected_process in process_links and not st.session_state.redirected:
     components.html(
-        """
+        f"""
         <script>
-            window.location.href = "https://mn-prediction-kwaterailab.streamlit.app/";
+            window.location.href = "{process_links[st.session_state.selected_process]}";
         </script>
         """,
         height=0,
@@ -200,6 +206,7 @@ with st.sidebar:
     # 사이드바에서 선택된 경우, 세션 상태 업데이트
     if selected_process_sidebar != st.session_state.selected_process:
         st.session_state.selected_process = selected_process_sidebar
+        st.session_state.redirected = False  # Reset redirection if process changes
     
     # Disinfection 선택 시 추가 입력 슬라이더
     if st.session_state.selected_process.startswith("4️⃣"):
@@ -261,6 +268,7 @@ with col1:
         process_number = ord(clicked_node_id) - 64  # 'A' -> 1
         process_name = process_labels.get(clicked_node_id, "Unknown Process")
         st.session_state.selected_process = f"{process_number}️⃣ {process_name}"
+        st.session_state.redirected = False  # Reset redirection when a node is clicked
 
 # --------------------------------------------------------------------
 # col2 영역에서 'Plotly Circle Chart' 대신 'Agraph'를 사용해 4개 노드 표시
@@ -275,10 +283,22 @@ with col2:
     except (IndexError, ValueError):
         process_name = "Unknown Process"
 
-    # 프로세스 A 선택 시 안내
-    if st.session_state.selected_process.startswith("1️⃣"):
-        st.info("🔄 Manganese Prediction in reservoirs")
-        st.markdown("[👉 Click](https://mn-prediction-kwaterailab.streamlit.app/)")
+    # 프로세스 A 또는 C 선택 시 안내
+    if st.session_state.selected_process in process_links:
+        # Define descriptions for each linked process
+        linked_descriptions = {
+            "1️⃣ Raw Water Quality Prediction": "🔄 Manganese Prediction in reservoirs",
+            "3️⃣ Filtration": "🔄 Filtration Process Overview"
+        }
+        description = linked_descriptions.get(st.session_state.selected_process, "🔄 Process Overview")
+        st.info(description)
+        
+        # Define links for each linked process
+        linked_urls = {
+            "1️⃣ Raw Water Quality Prediction": process_links["1️⃣ Raw Water Quality Prediction"],
+            "3️⃣ Filtration": process_links["3️⃣ Filtration"]
+        }
+        st.markdown(f"[👉 Click]({linked_urls[st.session_state.selected_process]})")
     else:
         st.subheader(f"** {process_name} - Key Parameters")
 
@@ -286,7 +306,7 @@ with col2:
         # (1) Manganese, (2) Algae, (3) Synedra, (4) 2-MIB
         node_list = [
             Node(id="Manganese", label="Manganese", size=30, color="#4F81BD", shape='database'),  # 파랑
-            Node(id="Algae",     label="Algae",     size=30, color="#9BBB59", shape='box'),  # 연두
+            Node(id="Algae",     label="Algae",     size=30, color="#9BBB59", shape='box'),      # 연두
             Node(id="Synedra",   label="Synedra",   size=30, color="#F79646", shape='ellipse'),  # 주황
             Node(id="2-MIB",     label="2-MIB",     size=30, color="#C0504D", shape='ellipse')   # 붉은색
         ]
@@ -302,7 +322,7 @@ with col2:
         config2 = Config(
             height=600,
             width=600,
-            directed=True,  # Changed to True to show directed edges
+            directed=True,  # 방향성 있는 엣지 표시
             physics=True,
             hierarchical=False,
             nodeHighlightBehavior=True,
